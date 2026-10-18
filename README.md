@@ -17,6 +17,10 @@ npm run test:coverage
 npm run build      # strict typecheck + production build in dist/
 ```
 
+### macOS app (.dmg)
+
+`src-tauri/` wraps the same web build in a native window (Tauri 2). On GitHub, **Actions → Build macOS app → Run workflow** builds a universal `.dmg` and attaches it to a Release named after the version in `src-tauri/tauri.conf.json`; bump that version for the next release. Locally (needs Rust from rustup.rs): `npm run app`. The app is ad-hoc signed, not notarized: on first launch use System Settings → Privacy & Security → **Open Anyway**.
+
 ### Publish on GitHub Pages (installable app)
 
 Push the `nodeboard/` folder as the root of a GitHub repository and set **Settings → Pages → Source** to **GitHub Actions**. [.github/workflows/deploy.yml](.github/workflows/deploy.yml) then tests, builds and publishes every push to `main` at `https://<user>.github.io/<repo>/`. The page ships a web manifest and a service worker, so it can be installed as an app (Chrome/Edge: install icon in the address bar; Safari: File → Add to Dock; iPhone: Share → Add to Home Screen) and starts offline. Data stays in each browser's IndexedDB; the `server/` API is not deployed by this workflow.
