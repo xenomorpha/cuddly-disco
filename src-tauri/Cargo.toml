@@ -1,6 +1,6 @@
 [package]
 name = "nodeboard"
-version = "0.1.0"
+version = "0.1.1"
 description = "Nodeboard desktop app"
 edition = "2021"
 
