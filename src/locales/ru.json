@@ -460,5 +460,9 @@
   "{n} items": "элементов: {n}",
   "{n} items tagged #{t}": "С тегом #{t}: {n}",
   "{n} words": "слов: {n}",
-  "…or paste / drop an image, or use a URL": "…или вставьте / перетащите изображение, или укажите URL"
+  "…or paste / drop an image, or use a URL": "…или вставьте / перетащите изображение, или укажите URL",
+  "Theme": "Тема",
+  "Light": "Светлая",
+  "Dark": "Тёмная",
+  "Same as system": "Как в системе"
 }

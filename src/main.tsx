@@ -13,6 +13,11 @@ if (import.meta.env.DEV) {
   (window as any).__nb = { useStore, actions, getIndex, errors };
 }
 
+// theme: <html data-theme="light|dark|system">, styles.css maps it to colours
+const applyTheme = (theme: string) => { document.documentElement.dataset.theme = theme; };
+applyTheme(useStore.getState().ui.theme);
+useStore.subscribe((s, prev) => { if (s.ui.theme !== prev.ui.theme) applyTheme(s.ui.theme); });
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

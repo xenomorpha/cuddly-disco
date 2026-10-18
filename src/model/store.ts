@@ -61,6 +61,7 @@ export interface UIState {
   showBadges: boolean;
   minimap: boolean;
   locale: 'en' | 'ru';
+  theme: 'light' | 'dark' | 'system';
   tool: 'select' | 'connect';
   shareToken: string | null; // when opened through a public link
   sidebarOpen: boolean;
@@ -125,6 +126,7 @@ const initialUI: UIState = {
   showBadges: savedPrefs.showBadges ?? true,
   minimap: savedPrefs.minimap ?? false,
   locale: savedPrefs.locale ?? (globalThis.navigator?.language?.startsWith('ru') ? 'ru' : 'en'),
+  theme: savedPrefs.theme ?? 'light',
   tool: 'select',
   shareToken: null,
   sidebarOpen: typeof window !== 'undefined' ? window.innerWidth > 800 : true,
@@ -150,11 +152,11 @@ export function setUI(patch: Partial<UIState> | ((ui: UIState) => Partial<UIStat
   useStore.setState((s) => {
     const p = typeof patch === 'function' ? patch(s.ui) : patch;
     const ui = { ...s.ui, ...p };
-    if ('snap' in p || 'showBadges' in p || 'minimap' in p || 'locale' in p) {
+    if ('snap' in p || 'showBadges' in p || 'minimap' in p || 'locale' in p || 'theme' in p) {
       try {
         localStorage.setItem(
           'nodeboard:prefs',
-          JSON.stringify({ snap: ui.snap, showBadges: ui.showBadges, minimap: ui.minimap, locale: ui.locale }),
+          JSON.stringify({ snap: ui.snap, showBadges: ui.showBadges, minimap: ui.minimap, locale: ui.locale, theme: ui.theme }),
         );
       } catch {
         /* storage unavailable */

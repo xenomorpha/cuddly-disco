@@ -25,6 +25,50 @@
   color-scheme: light;
 }
 
+/* Dark theme: chosen in Settings, or "Same as system" while macOS is dark. */
+:root[data-theme='dark'] {
+  --bg: #17181b;
+  --canvas-bg: #17181b;
+  --panel: #212327;
+  --card: #2a2d32;
+  --text: #e8e6e3;
+  --muted: #9aa0a6;
+  --border: #34373d;
+  --border-strong: #464a52;
+  --accent: #a29bfe;
+  --accent-soft: #a29bfe26;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --board-cover: #3a3554;
+  --graph-bg: #17181b;
+  --graph-fg: #e8e6e3;
+  --graph-edge: rgba(180, 186, 192, 0.32);
+  --graph-label-bg: rgba(23, 24, 27, 0.8);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] {
+    --bg: #17181b;
+    --canvas-bg: #17181b;
+    --panel: #212327;
+    --card: #2a2d32;
+    --text: #e8e6e3;
+    --muted: #9aa0a6;
+    --border: #34373d;
+    --border-strong: #464a52;
+    --accent: #a29bfe;
+    --accent-soft: #a29bfe26;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --board-cover: #3a3554;
+    --graph-bg: #17181b;
+    --graph-fg: #e8e6e3;
+    --graph-edge: rgba(180, 186, 192, 0.32);
+    --graph-label-bg: rgba(23, 24, 27, 0.8);
+    color-scheme: dark;
+  }
+}
+
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 body {

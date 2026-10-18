@@ -237,6 +237,13 @@ export function SettingsDialog() {
               <option value="ru">Русский</option>
             </select>
           </label>
+          <label className="field"><span>{t('Theme')}</span>
+            <select value={ui.theme} onChange={(e) => setUI({ theme: e.target.value as 'light' | 'dark' | 'system' })}>
+              <option value="light">{t('Light')}</option>
+              <option value="dark">{t('Dark')}</option>
+              <option value="system">{t('Same as system')}</option>
+            </select>
+          </label>
           <label className="toggle"><input type="checkbox" checked={ui.snap} onChange={(e) => setUI({ snap: e.target.checked })} /> {t('Snap to grid')}</label>
           <label className="toggle"><input type="checkbox" checked={ui.showBadges} onChange={(e) => setUI({ showBadges: e.target.checked })} /> {t('Show backlink count badges on cards')}</label>
           <label className="toggle"><input type="checkbox" checked={ui.minimap} onChange={(e) => setUI({ minimap: e.target.checked })} /> {t('Show minimap')}</label>
