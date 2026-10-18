@@ -1,0 +1,31 @@
+{
+  "name": "nodeboard-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "migrate": "tsx src/cli.ts migrate",
+    "seed": "tsx src/cli.ts seed",
+    "reindex": "tsx src/cli.ts reindex",
+    "openapi": "tsx src/cli.ts openapi > openapi.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "import": "tsx src/cli.ts import"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^9.9.2",
+    "@fastify/swagger-ui": "^6.1.2",
+    "fastify": "^5.12.7",
+    "pg": "^8.23.1",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
+    "typescript": "5.9",
+    "vitest": "^5.0.5"
+  }
+}
