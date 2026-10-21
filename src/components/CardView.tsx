@@ -12,6 +12,15 @@ import { ImageCard, LinkCard, FileCard, MapCard } from './cards/MediaCards';
 import { TableCard } from './cards/TableCard';
 import { SketchCard } from './cards/SketchCard';
 import { SwatchCard } from './cards/SwatchCard';
+import { DatabaseView } from './database/DatabaseView';
+
+function DatabaseCard({ card }: BodyProps) {
+  return (
+    <div className="card-body db-card-body">
+      <DatabaseView dbId={card.id} />
+    </div>
+  );
+}
 import { Icon } from './icons';
 import { Markdown } from './Markdown';
 import { t } from '../i18n';
@@ -39,9 +48,10 @@ const BODIES: Record<string, React.FC<BodyProps>> = {
   table: TableCard,
   sketch: SketchCard,
   swatch: SwatchCard,
+  database: DatabaseCard,
 };
 
-const TEXT_TYPES = ['note', 'document', 'comment'];
+const TEXT_TYPES = ['note', 'document', 'comment', 'database'];
 
 const INTERACTIVE = 'input, textarea, select, button, a, iframe, audio, video, .interactive, .wiki-editor';
 
@@ -149,7 +159,7 @@ export function CardFrame({ placement: p, inColumn, floating }: { placement: Pla
           <Icon name="backlinks" size={11} /> {backlinks}
         </button>
       )}
-      {synced && <span className="synced-badge" title={t('Synced card — shown on several boards')}>⟳</span>}
+      {synced && <span className="synced-badge" title={t('Synced card — shown on several boards')}><Icon name="sync" size={11} /></span>}
       {p.locked && <span className="lock-badge" title={t('Locked')}><Icon name="lock" size={12} /></span>}
       {selected && !inColumn && !ctx.readOnly && !p.locked && !floating && (
         <>

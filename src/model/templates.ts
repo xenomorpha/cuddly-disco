@@ -20,7 +20,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'moodboard',
     name: 'Moodboard',
-    icon: '🎨',
+    icon: 'palette',
     description: 'Palette, references and a sketch area for visual direction.',
     build: (u) => {
       const b = new Builder(u);
@@ -36,7 +36,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'project-plan',
     name: 'Project plan',
-    icon: '🗂',
+    icon: 'folder',
     description: 'Kanban columns, milestones and a task list.',
     build: (u) => {
       const b = new Builder(u);
@@ -55,7 +55,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'creative-brief',
     name: 'Creative brief',
-    icon: '📝',
+    icon: 'pencil',
     description: 'Objective, audience, message and deliverables.',
     build: (u) => {
       const b = new Builder(u);
@@ -73,7 +73,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'story-plot',
     name: 'Story plot',
-    icon: '📖',
+    icon: 'book',
     description: 'Three-act structure with characters and scenes.',
     build: (u) => {
       const b = new Builder(u);
@@ -91,7 +91,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'research-map',
     name: 'Research map',
-    icon: '🔬',
+    icon: 'flask',
     description: 'Questions, sources and findings, linked together.',
     build: (u) => {
       const b = new Builder(u);
@@ -116,7 +116,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'weekly-planner',
     name: 'Weekly planner',
-    icon: '📅',
+    icon: 'calendar',
     description: 'A column per day plus priorities.',
     build: (u) => {
       const b = new Builder(u);

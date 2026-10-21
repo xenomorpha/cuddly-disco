@@ -9,11 +9,12 @@ import {
 import { canView } from './model/permissions';
 import { useLocale } from './i18n';
 import { Canvas, isTyping } from './components/Canvas';
-import { Sidebar, Toolbar, Topbar, TOOL_KEYS, addAtCenter } from './components/Chrome';
+import { Toolbar, Topbar, TOOL_KEYS, addAtCenter } from './components/Chrome';
 import { RightPanel } from './components/RightPanel';
 import { GlobalGraph } from './components/GraphView';
 import { QuickSwitcher, SearchDialog, SettingsDialog, ShareDialog, ShortcutsOverlay, TagPage, TemplatesDialog, TrashDialog } from './components/Dialogs';
 import { DocEditor, ListView, PeekPanel, Presentation, ShareGate, Toast } from './components/Views';
+import { DatabasePage, RowPage } from './components/database/DatabaseView';
 import { ContextMenu } from './components/ContextMenu';
 import { PickerDialog } from './components/Pickers';
 import { handlePaste } from './components/dropImport';
@@ -95,6 +96,8 @@ export function App() {
       if (mod && e.shiftKey && k === 'b') { e.preventDefault(); setUI({ rightPanel: s.rightPanel === 'backlinks' ? null : 'backlinks' }); return; }
       if (typing) return;
       if (e.key === 'Escape') {
+        if (s.rowPage) return setUI({ rowPage: null });
+        if (s.dbPage) return setUI({ dbPage: null });
         if (s.globalGraph) return setUI({ globalGraph: false });
         if (s.peek) return setUI({ peek: null });
         if (s.tool === 'connect') return setUI({ tool: 'select' });
@@ -102,7 +105,7 @@ export function App() {
         if (s.rightPanel) return setUI({ rightPanel: null });
         return;
       }
-      if (s.globalGraph || s.docEditor || s.presenting) return;
+      if (s.globalGraph || s.docEditor || s.presenting || s.dbPage || s.rowPage) return;
       if (document.querySelector('.modal-backdrop')) return;
       const editable = canEditBoard(s.boardId);
       if (mod && k === 'z') { e.preventDefault(); if (!editable) return; e.shiftKey ? redo() : undo(); return; }
@@ -183,11 +186,10 @@ export function App() {
   const allowed = canView(currentAccess().board(ui.boardId));
 
   return (
-    <div className={'app' + (ui.presenting ? ' presenting' : '') + (ui.sidebarOpen ? ' with-sidebar' : '') + (ui.rightPanel ? ' with-panel' : '') + (ui.peek ? ' with-peek' : '')}>
+    <div className={'app' + (ui.presenting ? ' presenting' : '') + (ui.rightPanel ? ' with-panel' : '') + (ui.peek ? ' with-peek' : '')}>
       {ui.shareToken && <div className="share-banner">{t('Viewing a shared board (read-only)')}</div>}
       {!ui.presenting && <Topbar />}
       <div className="main">
-        {!ui.presenting && ui.sidebarOpen && !ui.shareToken && <Sidebar />}
         {!ui.presenting && !ui.listView && <Toolbar />}
         <div className="stage">
           {!allowed ? (
@@ -212,6 +214,8 @@ export function App() {
       {ui.trashOpen && <TrashDialog />}
       {ui.tagPage && <TagPage tag={ui.tagPage} />}
       {ui.docEditor && <DocEditor key={ui.docEditor.cardId} cardId={ui.docEditor.cardId} anchor={ui.docEditor.anchor} />}
+      {ui.dbPage && <DatabasePage dbId={ui.dbPage} />}
+      {ui.rowPage && <RowPage rowId={ui.rowPage} />}
       <ContextMenu />
       <PickerDialog />
       <Toast />

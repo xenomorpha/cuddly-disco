@@ -41,7 +41,8 @@ export function buildGraph(doc: Workspace, idx: WsIndex, access: AccessFn, s: Gr
     if (!scope) return true;
     const c = doc.cards[id];
     if (c?.type === 'board') return scope.has(id);
-    return (idx.placementsByCard.get(id) ?? []).some((p) => scope.has(p.boardId));
+    const host = c?.type === 'row' && c.data.databaseId ? c.data.databaseId : id;
+    return (idx.placementsByCard.get(host) ?? []).some((p) => scope.has(p.boardId));
   };
   const from = s.dateFrom ? Date.parse(s.dateFrom) : null;
   const to = s.dateTo ? Date.parse(s.dateTo) + 86400_000 : null;
@@ -112,6 +113,9 @@ export function buildGraph(doc: Workspace, idx: WsIndex, access: AccessFn, s: Gr
       if (n.kind === 'board') {
         const parent = doc.cards[n.id]?.data.parentId;
         if (parent && nodes.has(parent)) add(n.id, parent, 'containment');
+      } else if (n.type === 'row') {
+        const dbId = doc.cards[n.id]?.data.databaseId;
+        if (dbId && nodes.has(dbId)) add(n.id, dbId, 'containment');
       } else if (n.kind === 'card') {
         for (const p of idx.placementsByCard.get(n.id) ?? []) if (nodes.has(p.boardId)) add(n.id, p.boardId, 'containment');
       }

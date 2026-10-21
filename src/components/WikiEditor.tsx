@@ -8,7 +8,7 @@ import { fromEditable, headings, openLinkQuery, toEditable } from '../model/link
 import { getDoc, getUI } from '../model/store';
 import { getIndex } from '../model/index';
 import { createLinkTarget, currentAccess } from '../model/actions';
-import { CardTypeIcon } from './icons';
+import { CardTypeIcon, Icon } from './icons';
 import { t } from '../i18n';
 import type { CardType } from '../model/types';
 
@@ -223,10 +223,10 @@ export function WikiEditor(props: Props) {
           <button title="Strikethrough" onClick={() => wrap('~~', '~~')}><s>S</s></button>
           <button title="Code (Cmd/Ctrl+E)" onClick={() => wrap('`', '`')}>{'</>'}</button>
           <span className="sep" />
-          <button title="Quote" onClick={() => linePrefix('> ')}>❝</button>
-          <button title="Bullet list" onClick={() => linePrefix('- ')}>•</button>
+          <button title="Quote" onClick={() => linePrefix('> ')}><Icon name="quote" size={13} /></button>
+          <button title="Bullet list" onClick={() => linePrefix('- ')}><Icon name="list" size={13} /></button>
           <button title="Numbered list" onClick={() => linePrefix('1. ')}>1.</button>
-          <button title="Checklist" onClick={() => linePrefix('- [ ] ')}>☑</button>
+          <button title="Checklist" onClick={() => linePrefix('- [ ] ')}><Icon name="checkbox" size={13} /></button>
           <span className="sep" />
           <button title="Wiki-link [[" onClick={() => { insertAtCaret('[['); requestAnimationFrame(() => ref.current && updateAc(ref.current)); }}>[[ ]]</button>
         </div>

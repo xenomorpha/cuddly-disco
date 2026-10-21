@@ -4,6 +4,7 @@
 // board hidden from one member.
 
 import { Builder, link } from './builder';
+import { defaultSchema, option } from './database';
 import type { Workspace } from './types';
 import { putAsset, uid } from './store';
 
@@ -17,16 +18,16 @@ export function seedWorkspace(): { doc: Workspace; assets: Promise<void> } {
 
   const root = {
     id: rootId, type: 'board' as const, title: 'Home', text: '', labels: [], createdBy: owner, createdAt: t, updatedAt: t, updatedBy: owner,
-    data: { parentId: null, icon: '🏠' },
+    data: { parentId: null, icon: 'home' },
   };
 
   // --- top-level boards
-  const research = b.board(rootId, 420, 40, 'Research', '🔬', { color: '#74b9ff' });
-  const mood = b.board(rootId, 620, 40, 'Moodboard', '🎨', { color: '#fd79a8' });
-  const plan = b.board(rootId, 820, 40, 'Project plan', '🗂', { color: '#55efc4' });
-  const journal = b.board(rootId, 1020, 40, 'Private journal', '🔒', { color: '#b2bec3' });
-  const interviews = b.board(research.cardId, 40, 380, 'Interviews', '🎙');
-  const round1 = b.board(interviews.cardId, 40, 40, 'Round 1', '1️⃣');
+  const research = b.board(rootId, 420, 40, 'Research', 'flask', { color: '#74b9ff' });
+  const mood = b.board(rootId, 620, 40, 'Moodboard', 'palette', { color: '#fd79a8' });
+  const plan = b.board(rootId, 820, 40, 'Project plan', 'folder', { color: '#55efc4' });
+  const journal = b.board(rootId, 1020, 40, 'Private journal', 'lock', { color: '#b2bec3' });
+  const interviews = b.board(research.cardId, 40, 380, 'Interviews', 'mic');
+  const round1 = b.board(interviews.cardId, 40, 40, 'Round 1', 'flag');
 
   // --- research content
   const insight = b.note(research.cardId, 280, 40, '', {
@@ -96,7 +97,7 @@ export function seedWorkspace(): { doc: Workspace; assets: Promise<void> } {
   // --- project plan
   const cols = ['To do', 'Doing', 'Done'].map((ti, i) => b.column(plan.cardId, 40 + i * 300, 40, ti));
   b.inColumn(cols[0].placementId, 'note', { text: `Draft onboarding using ${link(brief.cardId)}` });
-  b.inColumn(cols[0].placementId, 'note', { text: 'Graph performance test (5k nodes) #engineering' });
+  const perfNote = b.inColumn(cols[0].placementId, 'note', { text: '' });
   b.inColumn(cols[1].placementId, 'note', { text: 'Backlinks panel UI #engineering', color: '#81ecec' });
   b.inColumn(cols[2].placementId, 'note', { text: `Interview synthesis → ${link(summary.cardId)}`, color: '#55efc4' });
   const todo = b.card('todo', plan.cardId, 960, 40, {
@@ -144,6 +145,22 @@ export function seedWorkspace(): { doc: Workspace; assets: Promise<void> } {
     '- [ ] Pricing model',
     '- [x] Name — "Nodeboard" (placeholder)',
   ].join('\n');
+  // a Notion-style database: rows are cards, so they can be linked and have backlinks
+  const schema = defaultSchema();
+  const [status, tagsProp, due, ownerProp] = schema.props;
+  const [notStarted, inProgress, done] = status.options!;
+  tagsProp.options = ['writing', 'engineering', 'research'].map(option);
+  const [tWriting, tEng, tResearch] = tagsProp.options;
+  const tasks = b.card('database', plan.cardId, 40, 360, { title: 'Tasks', data: { db: schema } }, { w: 880 });
+  const day = (n: number) => new Date(t + n * 86400_000).toISOString().slice(0, 10);
+  const shipGraph = b.row(tasks.cardId, 'Ship graph view', { [status.id]: inProgress.id, [tagsProp.id]: [tEng.id], [due.id]: day(6), [ownerProp.id]: alex },
+    `Local + global graph, filters and saved views. Spec in ${link(brief.cardId, 'the brief', 'Goals')}.`);
+  b.row(tasks.cardId, 'Write onboarding copy', { [status.id]: inProgress.id, [tagsProp.id]: [tWriting.id], [due.id]: day(2), [ownerProp.id]: owner },
+    `Start from the ${link(welcome.cardId, 'welcome note')}. Keep it short.`);
+  b.row(tasks.cardId, 'Run usability sessions', { [status.id]: notStarted.id, [tagsProp.id]: [tResearch.id], [due.id]: day(9), [ownerProp.id]: sam });
+  b.row(tasks.cardId, 'Interview synthesis', { [status.id]: done.id, [tagsProp.id]: [tResearch.id, tWriting.id], [due.id]: day(-3), [ownerProp.id]: owner },
+    `See ${link(summary.cardId)}.`);
+  perfNote.card.text = `Graph performance test (5k nodes), part of ${link(shipGraph.id)} #engineering`;
   b.connect(rootId, welcome.placementId, research.placementId, { color: '#6c5ce7' }, 'start here');
   b.card('shortcut', rootId, 700, 320, { data: { targetBoardId: round1.cardId } });
   // synced copy of the to-do list on Home

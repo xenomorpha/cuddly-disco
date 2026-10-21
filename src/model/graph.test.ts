@@ -19,6 +19,8 @@ function fixture() {
   n2.card.text = `back to ${link(n1.cardId)} and ${link('gone')}`;
   n3.card.text = `secretly about ${link(n1.cardId)}`;
   b.connect(A.cardId, n1.placementId, orphan.placementId);
+  const dbS = b.card('database', S.cardId, 0, 0, { title: 'Secret DB' });
+  const rowS = b.row(dbS.cardId, 'Secret row', {}, `about ${link(n3.cardId)}`);
   const t = 1;
   const doc: Workspace = {
     id: 'w', name: 'W', ownerId: 'o', rootBoardId: root,
@@ -34,7 +36,7 @@ function fixture() {
     permissions: { p: { id: 'p', boardId: S.cardId, userId: 'v', role: 'none' } },
     shareLinks: {}, activity: [], notifications: [], graphViews: {}, graphSettings: {}, templates: {}, favorites: {}, recent: {}, version: 1,
   };
-  return { doc, ids: { A: A.cardId, S: S.cardId, n1: n1.cardId, n2: n2.cardId, n3: n3.cardId, orphan: orphan.cardId } };
+  return { doc, ids: { A: A.cardId, S: S.cardId, n1: n1.cardId, n2: n2.cardId, n3: n3.cardId, orphan: orphan.cardId, dbS: dbS.cardId, rowS: rowS.id } };
 }
 
 describe('link index', () => {
@@ -54,6 +56,26 @@ describe('link index', () => {
     expect(idx.backlinks.get(ids.n1)?.length ?? 0).toBe(0);
     expect(idx.isLive(ids.n2)).toBe(false);
     expect(idx.backlinks.get(ids.n2)?.length).toBe(1); // n1 still links to it -> rendered as broken
+  });
+});
+
+describe('database rows', () => {
+  it('are live, linkable and inherit the database board access', () => {
+    const { doc, ids } = fixture();
+    const idx = getIndex(doc);
+    expect(idx.isLive(ids.rowS)).toBe(true);
+    expect(idx.homeBoard.get(ids.rowS)).toBe(ids.S);
+    expect(idx.rowsByDb.get(ids.dbS)!.map((r) => r.id)).toEqual([ids.rowS]);
+    expect(idx.backlinks.get(ids.n3)!.some((r) => r.sourceId === ids.rowS)).toBe(true);
+    expect(makeAccess(doc, 'o').canSee(ids.rowS)).toBe(true);
+    expect(makeAccess(doc, 'v').canSee(ids.rowS)).toBe(false);
+    const g = buildGraph(doc, idx, makeAccess(doc, 'v'), DEFAULT_GRAPH_SETTINGS);
+    expect(g.nodes.some((n) => n.id === ids.rowS)).toBe(false);
+  });
+  it('die with their database', () => {
+    const { doc, ids } = fixture();
+    doc.cards[ids.dbS] = { ...doc.cards[ids.dbS], deletedAt: 1 };
+    expect(getIndex(doc).isLive(ids.rowS)).toBe(false);
   });
 });
 
@@ -86,7 +108,7 @@ describe('graph', () => {
     const noOrphans = buildGraph(doc, idx, acc, { ...s, showOrphans: false, showConnectors: false });
     expect(noOrphans.nodes.map((n) => n.id)).not.toContain(ids.orphan);
     const scoped = buildGraph(doc, idx, acc, { ...s, rootBoardId: ids.S });
-    expect(scoped.nodes.map((n) => n.id).sort()).toEqual([ids.S, ids.n3].sort());
+    expect(scoped.nodes.map((n) => n.id).sort()).toEqual([ids.S, ids.n3, ids.dbS, ids.rowS].sort());
     const withTags = buildGraph(doc, idx, acc, { ...s, showTags: true, showContainment: true });
     expect(withTags.edges.some((e) => e.kind === 'tag' && e.target === 'tag:research')).toBe(true);
     expect(withTags.edges.some((e) => e.kind === 'containment' && e.source === ids.n1 && e.target === ids.A)).toBe(true);

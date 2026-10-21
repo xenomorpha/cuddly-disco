@@ -1,12 +1,12 @@
 // Small helper for generating boards programmatically (seed data, templates, imports).
 
-import type { Card, CardData, CardType, Connector, ConnectorStyle, Placement, SubtreePayload } from './types';
+import type { Card, CardData, CardType, Connector, ConnectorStyle, DbValue, Placement, SubtreePayload } from './types';
 import { uid } from './store';
 
 const SIZES: Partial<Record<CardType, { w: number; h?: number }>> = {
   note: { w: 240 }, document: { w: 220 }, todo: { w: 260 }, board: { w: 170 }, column: { w: 280 },
   image: { w: 260 }, link: { w: 280 }, file: { w: 240 }, table: { w: 400 }, sketch: { w: 300, h: 220 },
-  swatch: { w: 140 }, map: { w: 320, h: 240 }, comment: { w: 240 }, shortcut: { w: 170 },
+  swatch: { w: 140 }, map: { w: 320, h: 240 }, comment: { w: 240 }, shortcut: { w: 170 }, database: { w: 760 },
 };
 
 export class Builder {
@@ -43,7 +43,7 @@ export class Builder {
     return this.card('note', boardId, x, y, { text, ...extra }, pl);
   }
 
-  board(parentId: string, x: number, y: number, title: string, icon = '📋', extra: Partial<Card> = {}) {
+  board(parentId: string, x: number, y: number, title: string, icon = 'board', extra: Partial<Card> = {}) {
     return this.card('board', parentId, x, y, { title, ...extra, data: { icon, parentId, ...(extra.data ?? {}) } });
   }
 
@@ -56,6 +56,18 @@ export class Builder {
     const col = this.placements.find((p) => p.id === columnPlacementId)!;
     const order = this.placements.filter((p) => p.columnId === columnPlacementId).length;
     return this.card(type, col.boardId, 0, 0, partial, { columnId: columnPlacementId, order });
+  }
+
+  /** Database row: a card with no placement. */
+  row(databaseId: string, title: string, values: Record<string, DbValue> = {}, text = '') {
+    const t = this.t++;
+    const order = this.cards.filter((c) => c.type === 'row' && c.data.databaseId === databaseId).length + 1;
+    const card: Card = {
+      id: uid(), type: 'row', title, text, labels: [], createdBy: this.userId, createdAt: t, updatedAt: t, updatedBy: this.userId,
+      data: { databaseId, values, order },
+    };
+    this.cards.push(card);
+    return card;
   }
 
   connect(boardId: string, from: string, to: string, style: Partial<ConnectorStyle> = {}, label = '') {

@@ -4,6 +4,7 @@ import { createCard, updateCard, updateData } from '../../model/actions';
 import { assetUrl, getDoc, toast } from '../../model/store';
 import { getIndex } from '../../model/index';
 import { t } from '../../i18n';
+import { Icon } from '../icons';
 
 export function hexToRgb(hex: string): [number, number, number] {
   let h = hex.replace('#', '');
@@ -138,10 +139,10 @@ export function SwatchCard({ card, placement, editing, readOnly }: BodyProps) {
             <input value={draft} onChange={(e) => set(e.target.value)} onKeyDown={(e) => e.stopPropagation()} aria-label="HEX" />
           </div>
           <div className="row">
-            <button className="btn small" onClick={() => void eyedrop()} title={t('Pick a colour from the screen or an image on the board')}>💧 {t('Eyedropper')}</button>
+            <button className="btn small" onClick={() => void eyedrop()} title={t('Pick a colour from the screen or an image on the board')}><Icon name="drop" size={14} /> {t('Eyedropper')}</button>
             <label className="small"><input type="checkbox" checked={card.data.showCaption ?? true} onChange={(e) => updateData(card.id, { showCaption: e.target.checked })} /> {t('Caption')}</label>
           </div>
-          <button className="btn small" onClick={() => void suggestPaletteFromBoard(placement.boardId, placement.x, placement.y + 200)}>🎨 {t('Suggest palette from board images')}</button>
+          <button className="btn small" onClick={() => void suggestPaletteFromBoard(placement.boardId, placement.x, placement.y + 200)}><Icon name="palette" size={14} /> {t('Suggest palette from board images')}</button>
           {sampling && <ImageSampler boardId={placement.boardId} onPick={(c) => { set(c); setSampling(false); }} onClose={() => setSampling(false)} />}
         </div>
       )}

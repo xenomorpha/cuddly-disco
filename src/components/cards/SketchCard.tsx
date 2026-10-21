@@ -136,7 +136,7 @@ export function SketchCard({ card, placement, editing, readOnly }: BodyProps) {
           ))}
           <input type="range" min={1} max={12} value={width} onChange={(e) => setWidth(+e.target.value)} aria-label={t('Stroke width')} />
           <button onClick={() => updateCard(card.id, (c) => { c.data.strokes?.pop(); })} title={t('Undo stroke')}><Icon name="undo" size={14} /></button>
-          <button onClick={() => updateCard(card.id, (c) => { c.data.strokes = []; })} title={t('Clear')}>✕</button>
+          <button onClick={() => updateCard(card.id, (c) => { c.data.strokes = []; })} title={t('Clear')}><Icon name="close" size={14} /></button>
         </div>
       )}
       <canvas

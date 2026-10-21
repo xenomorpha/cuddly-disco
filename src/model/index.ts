@@ -25,6 +25,8 @@ export function textFields(card: Card): TextField[] {
   const t = card.data.table;
   if (t) for (const r of t.rows) for (const c of t.columns) if (r.cells[c.id]) out.push({ field: `cell:${r.id}:${c.id}`, text: r.cells[c.id] });
   if (card.data.caption) out.push({ field: 'caption', text: card.data.caption });
+  // database rows: text-like property values can hold [[links]] and #tags
+  for (const [k, v] of Object.entries(card.data.values ?? {})) if (typeof v === 'string' && v && !/^\d{4}-\d{2}-\d{2}$/.test(v) && v.length > 1 && /\s|\[\[|#/.test(v)) out.push({ field: 'prop:' + k, text: v });
   return out;
 }
 
@@ -63,6 +65,8 @@ export interface WsIndex {
   tags: Map<string, Set<string>>;
   cardTags: Map<string, string[]>;
   childCount: (boardId: string) => number;
+  /** live rows of each database, in manual order */
+  rowsByDb: Map<string, Card[]>;
 }
 
 const LINK_TOKEN = /\[\[@?([^\]|#]+)(?:#([^\]|]*))?(?:\|([^\]]+))?\]\]/g;
@@ -132,6 +136,7 @@ function buildIndex(doc: Workspace): WsIndex {
     const c = doc.cards[id];
     if (!c || c.deletedAt) return false;
     if (c.type === 'board') return liveBoards.has(id);
+    if (c.type === 'row') return !!c.data.databaseId && c.data.databaseId !== id && placementsByCard.has(c.data.databaseId) && !doc.cards[c.data.databaseId]?.deletedAt;
     return placementsByCard.has(id);
   };
 
@@ -139,6 +144,9 @@ function buildIndex(doc: Workspace): WsIndex {
   for (const c of Object.values(doc.cards)) {
     if (c.type === 'board') {
       if (c.data.parentId) homeBoard.set(c.id, c.data.parentId);
+    } else if (c.type === 'row') {
+      const dbp = c.data.databaseId ? placementsByCard.get(c.data.databaseId) : undefined;
+      if (dbp?.length) homeBoard.set(c.id, dbp[0].boardId);
     } else {
       const ps = placementsByCard.get(c.id);
       if (ps?.length) homeBoard.set(c.id, ps[0].boardId);
@@ -188,6 +196,10 @@ function buildIndex(doc: Workspace): WsIndex {
     }
   }
 
+  const rowsByDb = new Map<string, Card[]>();
+  for (const c of Object.values(doc.cards)) if (c.type === 'row' && c.data.databaseId && isLive(c.id)) push(rowsByDb, c.data.databaseId, c);
+  for (const l of rowsByDb.values()) l.sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
+
   const label = (id: string) => editorLabel(id, resolvables, titleCounts);
   return {
     doc,
@@ -206,6 +218,7 @@ function buildIndex(doc: Workspace): WsIndex {
     tags,
     cardTags,
     childCount: (b: string) => placementsByBoard.get(b)?.filter((p) => !p.tray).length ?? 0,
+    rowsByDb,
   };
 }
 

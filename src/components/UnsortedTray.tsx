@@ -22,7 +22,7 @@ export function UnsortedTray({ boardId }: { boardId: string }) {
   return (
     <div className={'tray' + (open ? ' open' : '')} onPointerDown={(e) => e.stopPropagation()} aria-label={t('Unsorted')}>
       <button className="tray-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <Icon name="inbox" size={15} /> {t('Unsorted')} <span className="count">{items.length}</span> <span className="muted">{open ? '▾' : '▸'}</span>
+        <Icon name="inbox" size={15} /> {t('Unsorted')} <span className="count">{items.length}</span> <Icon name={open ? 'chevronDown' : 'chevronRight'} size={13} />
       </button>
       {open && (
         <div className="tray-items">
@@ -43,8 +43,8 @@ export function UnsortedTray({ boardId }: { boardId: string }) {
                 <span className="tray-title">{idx.title(c.id)}</span>
                 {editable && (
                   <>
-                    <button className="icon-btn" title={t('Place on board')} onClick={() => place(p.id, i)}>↧</button>
-                    <button className="icon-btn" title={t('Delete')} onClick={() => trashPlacements([p.id])}>×</button>
+                    <button className="icon-btn" title={t('Place on board')} onClick={() => place(p.id, i)}><Icon name="place" size={14} /></button>
+                    <button className="icon-btn" title={t('Delete')} onClick={() => trashPlacements([p.id])}><Icon name="close" size={13} /></button>
                   </>
                 )}
               </div>

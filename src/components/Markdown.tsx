@@ -7,7 +7,7 @@ import { parseLinks, slugify, type ParsedLink } from '../model/links';
 import { getDoc, justDragged, setUI } from '../model/store';
 import { cardTitle, getIndex } from '../model/index';
 import { currentAccess, openBoard, revealCard } from '../model/actions';
-import { CardTypeIcon } from './icons';
+import { CardTypeIcon, Icon } from './icons';
 import { t } from '../i18n';
 import { useAssetUrl } from '../hooks';
 
@@ -248,7 +248,7 @@ export function HoverPreview({ cardId, rect, anchor }: { cardId: string; rect: D
       ) : c.type === 'todo' ? (
         <ul className="checklist">
           {(c.data.items ?? []).slice(0, 10).map((it) => (
-            <li key={it.id} className={it.done ? 'done' : ''}>{it.done ? '☑' : '☐'} <Inline text={it.text} /></li>
+            <li key={it.id} className={it.done ? 'done' : ''}><span className={'box' + (it.done ? ' on' : '')}>{it.done && <Icon name="check" size={10} />}</span> <Inline text={it.text} /></li>
           ))}
         </ul>
       ) : (

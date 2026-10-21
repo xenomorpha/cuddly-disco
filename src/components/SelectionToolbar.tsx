@@ -113,7 +113,7 @@ export function SelectionToolbar({
         )}
       </div>
       {single && card.type !== 'board' && card.type !== 'document' && (
-        <button onClick={() => setEditing(first.id)} title={t('Edit') + ' (Enter)'}>✎</button>
+        <button onClick={() => setEditing(first.id)} title={t('Edit') + ' (Enter)'}><Icon name="edit" size={15} /></button>
       )}
       {single && (
         <button onClick={() => showBacklinks(card.id)} title={t('Backlinks') + ' (Cmd/Ctrl+Shift+B)'} className="with-count">
@@ -124,7 +124,7 @@ export function SelectionToolbar({
       {single && <button onClick={() => openInGraph(card.id)} title={t('Open in graph')}><Icon name="graph" size={15} /></button>}
       {single && <button onClick={() => openComments(card.id)} title={t('Comments')} className="with-count"><Icon name="comment" size={15} />{comments ? ' ' + comments : ''}</button>}
       <span className="sep" />
-      <button onClick={() => duplicate(sel)} title={t('Duplicate') + ' (Cmd/Ctrl+D)'}>⧉</button>
+      <button onClick={() => duplicate(sel)} title={t('Duplicate') + ' (Cmd/Ctrl+D)'}><Icon name="copy" size={15} /></button>
       <button className={locked ? 'on' : ''} onClick={() => toggleLock(sel)} title={locked ? t('Unlock') : t('Lock')}><Icon name="lock" size={15} /></button>
       {sel.length > 1 && <button onClick={() => groupIntoColumn(sel)} title={t('Group selection into column')}><Icon name="column" size={15} /></button>}
       <MoreMenu sel={sel} cardId={card.id} single={single} />
@@ -137,7 +137,7 @@ function MoreMenu({ sel, cardId, single }: { sel: string[]; cardId: string; sing
   const [open, setOpen] = useState(false);
   return (
     <div className="more-pop">
-      <button onClick={() => setOpen((o) => !o)} title={t('More')} aria-expanded={open}>⋯</button>
+      <button onClick={() => setOpen((o) => !o)} title={t('More')} aria-expanded={open}><Icon name="more" size={16} /></button>
       {open && (
         <div className="menu" onClick={() => setOpen(false)}>
           <button onClick={() => moveTo(sel)}>{t('Move to…')}</button>

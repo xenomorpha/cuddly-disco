@@ -515,7 +515,7 @@ export function Canvas({ boardId }: { boardId: string }) {
     <CanvasContext.Provider value={ctx}>
       <div
         ref={ref}
-        className={'canvas' + (spaceDown ? ' space' : '') + (ui.tool === 'connect' ? ' connect-mode' : '') + (ui.snap ? ' snap' : '')}
+        className={'canvas' + (spaceDown ? ' space' : '') + (ui.tool === 'connect' ? ' connect-mode' : '') + (ui.snap ? ' snap' : '') + (ui.showDots ? '' : ' no-dots')}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -575,6 +575,7 @@ export function Canvas({ boardId }: { boardId: string }) {
           </button>
           <button onClick={() => zoomAt(1.2)} aria-label={t('Zoom in')} title={t('Zoom in')}>+</button>
           <button onClick={() => zoomToFit()} aria-label={t('Zoom to fit')} title={t('Zoom to fit') + ' (Shift+1)'}><Icon name="zoomfit" size={16} /></button>
+          <button className={ui.showDots ? 'on' : ''} onClick={() => setUI({ showDots: !ui.showDots })} aria-label={t('Background dots')} aria-pressed={ui.showDots} title={t('Background dots')}><Icon name="dots" size={16} /></button>
           <button className={ui.minimap ? 'on' : ''} onClick={() => setUI({ minimap: !ui.minimap })} aria-label={t('Minimap')} title={t('Minimap')}><Icon name="minimap" size={16} /></button>
         </div>
         {ui.minimap && <Minimap boardId={boardId} vp={vp} host={ref} setVp={setVp} measure={measure} />}
@@ -599,8 +600,8 @@ function dropTargetAt(cx: number, cy: number, dragged: string[], doc: ReturnType
   for (const el of els) {
     if (el.closest('[data-dragging="true"]')) continue;
     if (el.closest('[data-drop-trash]')) return { kind: 'trash', key: 'trash' };
-    const sb = el.closest('[data-sidebar-board]') as HTMLElement | null;
-    if (sb) return { kind: 'board', id: sb.dataset.sidebarBoard!, key: 'sb:' + sb.dataset.sidebarBoard };
+    const sb = el.closest('[data-nav-board]') as HTMLElement | null;
+    if (sb && sb.dataset.navBoard !== getUI().boardId) return { kind: 'board', id: sb.dataset.navBoard!, key: 'sb:' + sb.dataset.navBoard };
     const colEl = el.closest('[data-drop-column]') as HTMLElement | null;
     if (colEl && !dragged.includes(colEl.dataset.dropColumn!)) {
       const draggedCards = dragged.map((d) => doc.cards[doc.placements[d]?.cardId]?.type);
@@ -629,7 +630,7 @@ function markHover(t: DropTarget | null) {
   let el: Element | null = null;
   if (t?.kind === 'trash') el = document.querySelector('[data-drop-trash]');
   else if (t?.kind === 'column') el = document.querySelector(`[data-drop-column="${t.id}"]`);
-  else if (t?.kind === 'board') el = document.querySelector(`[data-sidebar-board="${t.id}"]`) && t.key.startsWith('sb:') ? document.querySelector(`[data-sidebar-board="${t.id}"]`) : document.querySelector(`[data-drop-board="${t.id}"]`);
+  else if (t?.kind === 'board') el = t.key.startsWith('sb:') ? document.querySelector(`[data-nav-board="${t.id}"]`) : document.querySelector(`[data-drop-board="${t.id}"]`);
   if (el === hoverEl) return;
   hoverEl?.classList.remove('drop-hover');
   el?.classList.add('drop-hover');

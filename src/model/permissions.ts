@@ -74,6 +74,7 @@ export function makeAccess(ws: PermWs, userId: string) {
     const c = ws.cards[id];
     if (!c) return 'none';
     if (c.type === 'board') return board(id);
+    if (c.type === 'row') return c.data.databaseId && c.data.databaseId !== id ? card(c.data.databaseId) : 'none';
     const boards = cardBoards.get(id) ?? [];
     let best: Access = 'none';
     for (const b of boards) {

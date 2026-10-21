@@ -76,7 +76,7 @@ export function ContextMenu() {
     });
     if (editable) {
       if (hasClipboard()) items.push({ label: t('Paste'), hint: '⌘V', run: () => pasteClipboard(req.world) });
-      items.push(add('note', t('Add note')), add('todo', t('Add to-do list')), add('board', t('Add board')), add('column', t('Add column')), add('document', t('Add document')));
+      items.push(add('note', t('Add note')), add('todo', t('Add to-do list')), add('board', t('Add board')), add('column', t('Add column')), add('document', t('Add document')), add('database', t('Add database')));
       items.push({ label: t('Add board shortcut…'), run: () => addShortcut(ui.boardId, req.world.x, req.world.y) });
       items.push({ label: t('Suggest palette from board images'), run: () => void suggestPaletteFromBoard(ui.boardId, req.world.x, req.world.y) });
       items.push('sep');

@@ -13,6 +13,7 @@ import { buildGraph } from './graph';
 import { makeAccess } from './permissions';
 import { evaluate } from './formula';
 import { Builder } from './builder';
+import { valueText } from './database';
 import { pastePayload } from './actions';
 
 export function download(name: string, blob: Blob) {
@@ -99,13 +100,28 @@ export function cardToMarkdown(doc: Workspace, card: Card, withFrontmatter = tru
   const title = idx.title(card.id);
   switch (card.type) {
     case 'todo':
-      body = `# ${title}\n\n` + (card.data.items ?? []).map((i) => `- [${i.done ? 'x' : ' '}] ${ed(i.text)}${i.due ? ` 📅 ${i.due}` : ''}${i.assignee && doc.users[i.assignee] ? ` @${doc.users[i.assignee].name}` : ''}`).join('\n');
+      body = `# ${title}\n\n` + (card.data.items ?? []).map((i) => `- [${i.done ? 'x' : ' '}] ${ed(i.text)}${i.due ? ` (due ${i.due})` : ''}${i.assignee && doc.users[i.assignee] ? ` @${doc.users[i.assignee].name}` : ''}`).join('\n');
       break;
     case 'table': {
       const tb = card.data.table!;
       const get = (c: number, r: number) => tb.rows[r]?.cells[tb.columns[c]?.id] ?? '';
       body = `# ${title}\n\n| ${tb.columns.map((c) => c.name).join(' | ')} |\n| ${tb.columns.map(() => '---').join(' | ')} |\n` +
         tb.rows.map((r) => '| ' + tb.columns.map((c) => { const v = r.cells[c.id] ?? ''; return String(v.startsWith('=') ? evaluate(v, get) : ed(v)).replace(/\|/g, '\\|'); }).join(' | ') + ' |').join('\n');
+      break;
+    }
+    case 'database': {
+      const sc = card.data.db;
+      const rows = idx.rowsByDb.get(card.id) ?? [];
+      if (!sc) break;
+      const cells = (r: Card) => sc.props.map((p) => valueText(r.data.values?.[p.id], p, doc.users).replace(/\|/g, '\\|'));
+      body = `# ${title}\n\n| Name | ${sc.props.map((p) => p.name).join(' | ')} |\n|${' --- |'.repeat(sc.props.length + 1)}\n` +
+        rows.map((r) => `| ${formatLink(safe(idx.title(r.id)), null, null)} | ${cells(r).join(' | ')} |`).join('\n');
+      break;
+    }
+    case 'row': {
+      const sc = card.data.databaseId ? doc.cards[card.data.databaseId]?.data.db : undefined;
+      const props = (sc?.props ?? []).map((p) => `- **${p.name}:** ${ed(valueText(card.data.values?.[p.id], p, doc.users))}`).join('\n');
+      body = `# ${title}\n\n${props}\n\n${ed(card.text)}`;
       break;
     }
     case 'link':
@@ -129,7 +145,7 @@ export function cardToMarkdown(doc: Workspace, card: Card, withFrontmatter = tru
     default:
       body = (card.title && !card.text.startsWith('#') ? `# ${card.title}\n\n` : '') + ed(card.text);
   }
-  if (card.text && !['note', 'document', 'comment'].includes(card.type)) body += '\n\n' + ed(card.text);
+  if (card.text && !['note', 'document', 'comment', 'row'].includes(card.type)) body += '\n\n' + ed(card.text);
   const comments = Object.values(doc.comments).filter((c) => c.targetId === card.id);
   if (comments.length) body += '\n\n## Comments\n' + comments.map((c) => `> **${doc.users[c.authorId]?.name ?? '?'}**: ${ed(c.body)}`).join('\n');
   return fm + body + '\n';
@@ -212,7 +228,7 @@ export async function importVault(files: VaultFile[], vaultName: string) {
   if (!md.length && !imgs.length) return toast('No Markdown files found');
   const b = new Builder(userId);
   const ROOT = 'ROOT';
-  const rootBoard = b.board(ROOT, 0, 0, vaultName, '📥');
+  const rootBoard = b.board(ROOT, 0, 0, vaultName, 'inbox');
   const boardFor = new Map<string, string>([['', rootBoard.cardId]]);
   const counters = new Map<string, number>();
   const nextPos = (boardId: string, w: number) => {
@@ -227,7 +243,7 @@ export async function importVault(files: VaultFile[], vaultName: string) {
     const parts = folder.split('/');
     const parentId = ensureBoard(parts.slice(0, -1).join('/'));
     const p = nextPos(parentId, 170);
-    const bd = b.board(parentId, p.x, p.y, parts[parts.length - 1], '📁');
+    const bd = b.board(parentId, p.x, p.y, parts[parts.length - 1], 'folder');
     boardFor.set(folder, bd.cardId);
     return bd.cardId;
   };

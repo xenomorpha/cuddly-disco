@@ -115,7 +115,7 @@ export function PeekPanel({ cardId }: { cardId: string }) {
             ))}
           </ul>
         ) : c.type === 'todo' ? (
-          <ul className="checklist">{(c.data.items ?? []).map((i) => <li key={i.id} className={i.done ? 'done' : ''}>{i.done ? '☑' : '☐'} {toPlain(i.text, idx.label)}</li>)}</ul>
+          <ul className="checklist">{(c.data.items ?? []).map((i) => <li key={i.id} className={i.done ? 'done' : ''}><span className={'box' + (i.done ? ' on' : '')}>{i.done && <Icon name="check" size={10} />}</span> {toPlain(i.text, idx.label)}</li>)}</ul>
         ) : (
           <Markdown text={c.text || c.data.description || c.data.caption || ''} />
         )}
@@ -178,8 +178,9 @@ export function ListView({ boardId }: { boardId: string }) {
   const editable = canEditBoard(boardId);
   const describe = (cardId: string) => {
     const c = doc.cards[cardId];
-    if (c.type === 'todo') return (c.data.items ?? []).map((i) => `${i.done ? '☑' : '☐'} ${toPlain(i.text, idx.label)}`).join('; ');
+    if (c.type === 'todo') return (c.data.items ?? []).map((i) => `${i.done ? t('done') : t('to do')}: ${toPlain(i.text, idx.label)}`).join('; ');
     if (c.type === 'board') return t('{n} items', { n: idx.childCount(c.id) });
+    if (c.type === 'database') return (idx.rowsByDb.get(c.id) ?? []).map((r) => idx.title(r.id)).join('; ');
     if (c.type === 'link') return c.data.url ?? '';
     if (c.type === 'swatch') return c.data.hex ?? '';
     if (c.type === 'image') return c.data.caption ?? '';

@@ -6,6 +6,8 @@ import type {
   Card, CardData, CardType, Connector, GraphSettings, Placement, Role, SubtreePayload, Workspace,
 } from './types';
 import { DEFAULT_GRAPH_SETTINGS } from './types';
+import type { DbSchema, DbValue } from './types';
+import { defaultSchema } from './database';
 import { commit, getDoc, getUI, setUI, toast, uid, type Viewport } from './store';
 import { boardPath, cardTitle, getIndex, subtreeBoards } from './index';
 import { linkMention, type Mention } from './links';
@@ -26,6 +28,8 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h?: number }> = {
   map: { w: 320, h: 240 },
   comment: { w: 240 },
   shortcut: { w: 170 },
+  database: { w: 760 },
+  row: { w: 240 },
 };
 
 export const TRASH_DAYS = 30;
@@ -70,7 +74,9 @@ function defaultData(type: CardType): CardData {
     case 'swatch':
       return { hex: '#6c5ce7', showCaption: true };
     case 'board':
-      return { icon: '📋' };
+      return { icon: 'board' };
+    case 'database':
+      return { db: defaultSchema() };
     case 'map':
       return { lat: 51.5074, lon: -0.1278, address: 'London' };
     default:
@@ -399,7 +405,7 @@ export function restoreCard(cardId: string) {
       c.data.parentId = doc.rootBoardId;
       for (const p of restored) p.boardId = doc.rootBoardId;
     }
-    if (c.type !== 'board' && !restored.length && !ps.length) {
+    if (c.type !== 'board' && c.type !== 'row' && !restored.length && !ps.length) {
       const pl: Placement = { id: uid(), cardId, boardId: doc.rootBoardId, order: 0, x: 0, y: 0, w: DEFAULT_SIZE[c.type].w, z: 1 };
       d.placements[pl.id] = pl;
     }
@@ -420,6 +426,8 @@ export function hardDelete(cardId: string) {
 function hardDeleteDraft(d: Draft<Workspace>, cardId: string) {
   const c = d.cards[cardId];
   if (!c) return;
+  if (c.type === 'database')
+    for (const r of Object.values(d.cards)) if (r.type === 'row' && r.data.databaseId === cardId) delete d.cards[r.id];
   if (c.type === 'board') {
     const boards = subtreeBoards(d as Workspace, cardId);
     for (const p of Object.values(d.placements))
@@ -463,6 +471,8 @@ export function copySubtree(placementIds: string[]): SubtreePayload {
     cards.set(c.id, c);
     if (c.type === 'column')
       for (const q of Object.values(doc.placements)) if (q.columnId === p.id && !q.deletedAt) addPlacement(q);
+    if (c.type === 'database')
+      for (const r of Object.values(doc.cards)) if (r.type === 'row' && r.data.databaseId === c.id && !r.deletedAt) cards.set(r.id, r);
     if (c.type === 'board') {
       for (const b of subtreeBoards(doc, c.id)) {
         if (doc.cards[b]) cards.set(b, doc.cards[b]);
@@ -500,6 +510,8 @@ export function pastePayload(payload: SubtreePayload, boardId: string, dx: numbe
       nc.createdBy = nc.updatedBy = me();
       nc.deletedAt = null;
       delete nc.history;
+      if (nc.type === 'row' && c.data.databaseId && cardIds.has(c.data.databaseId)) nc.data.databaseId = map(c.data.databaseId);
+      for (const [k, v] of Object.entries(nc.data.values ?? {})) if (typeof v === 'string') nc.data.values![k] = remapText(v);
       if (nc.type === 'board') nc.data.parentId = c.data.parentId && cardIds.has(c.data.parentId) ? map(c.data.parentId) : boardId;
       d.cards[nc.id] = nc;
     }
@@ -694,6 +706,11 @@ export function revealCard(cardId: string, anchor?: string | null) {
     setUI({ trashOpen: true });
     return;
   }
+  if (card.type === 'row') {
+    if (card.data.databaseId) revealCard(card.data.databaseId);
+    setUI({ rowPage: cardId, focusCard: cardId });
+    return;
+  }
   if (card.type === 'board' && !idx.placementsByCard.get(cardId)?.length) {
     openBoard(cardId);
     return;
@@ -871,4 +888,55 @@ export function instantiateTemplate(name: string, icon: string, payload: Subtree
   pastePayload({ ...payload, placements: payload.placements.map((p) => (p.boardId === payload.rootId ? { ...p, boardId: '__tpl_root__' } : p)) }, cardId, 0, 0, 'Apply template');
   setUI({ selection: [] });
   return cardId;
+}
+
+// ------------------------------------------------------------------ databases
+
+export function updateDb(dbId: string, fn: (db: Draft<DbSchema>) => void, key?: string) {
+  updateCard(dbId, (c) => {
+    c.data.db ??= defaultSchema();
+    fn(c.data.db);
+  }, key ?? 'db:' + dbId);
+}
+
+/** New row (a card without a placement). Returns its id. */
+export function addRow(dbId: string, values: Record<string, DbValue> = {}, title = '') {
+  const doc = getDoc();
+  const rows = getIndex(doc).rowsByDb.get(dbId) ?? [];
+  const order = rows.length ? Math.max(...rows.map((r) => r.data.order ?? 0)) + 1 : 1;
+  const card = newCard('row', { title, data: { databaseId: dbId, values, order } });
+  const boardId = getIndex(doc).homeBoard.get(dbId) ?? getUI().boardId;
+  commit('Add row', (d) => {
+    d.cards[card.id] = card;
+  }, { activity: { boardId, text: `added a row to "${cardTitle(doc.cards[dbId], doc)}"` } });
+  return card.id;
+}
+
+export function setRowValue(rowId: string, propId: string, value: DbValue) {
+  updateCard(rowId, (c) => {
+    c.data.values ??= {};
+    if (value === null || value === undefined || value === '' || (Array.isArray(value) && !value.length)) delete c.data.values[propId];
+    else c.data.values[propId] = value as never;
+  }, `val:${rowId}:${propId}`);
+}
+
+export function deleteRows(ids: string[]) {
+  const t = now();
+  commit('Delete row', (d) => {
+    for (const id of ids) if (d.cards[id]) d.cards[id].deletedAt = t;
+  });
+  toast(`Moved ${ids.length} row(s) to Trash · Cmd/Ctrl+Z to undo`);
+}
+
+/** Move a row before another one (manual order), optionally setting a value on the way. */
+export function reorderRow(rowId: string, beforeId: string | null, dbId: string) {
+  const rows = (getIndex(getDoc()).rowsByDb.get(dbId) ?? []).filter((r) => r.id !== rowId);
+  let i = beforeId ? rows.findIndex((r) => r.id === beforeId) : rows.length;
+  if (i < 0) i = rows.length;
+  const ids = [...rows.slice(0, i).map((r) => r.id), rowId, ...rows.slice(i).map((r) => r.id)];
+  commit('Reorder rows', (d) => {
+    ids.forEach((id, n) => {
+      if (d.cards[id]) d.cards[id].data.order = n + 1;
+    });
+  });
 }

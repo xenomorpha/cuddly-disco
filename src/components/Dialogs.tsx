@@ -20,7 +20,7 @@ import { boardRole, canView, isOwner } from '../model/permissions';
 import { seedWorkspace } from '../model/seed';
 import { useAccess, useDoc, useUI, modKey } from '../hooks';
 import { rankCards } from './WikiEditor';
-import { CardTypeIcon, Icon } from './icons';
+import { BoardIcon, CardTypeIcon, Icon } from './icons';
 import { t } from '../i18n';
 import { del as idbDel, clear as idbClear } from 'idb-keyval';
 
@@ -185,7 +185,7 @@ export function SearchDialog() {
 export function ShortcutsOverlay() {
   const m = modKey();
   const groups: [string, [string, string][]][] = [
-    [t('Create'), [['N', t('Note')], ['D', t('Document')], ['T', t('To-do')], ['B', t('Board')], ['C', t('Column')], ['I', t('Image')], ['U', t('Link')], ['F', t('File / audio')], ['E', t('Table')], ['S', t('Sketch')], ['K', t('Colour')], ['M', t('Map')], ['O', t('Comment')], ['L', t('Line tool')], [t('Double-click canvas'), t('New note')]]],
+    [t('Create'), [['N', t('Note')], ['D', t('Document')], ['T', t('To-do')], ['B', t('Board')], ['C', t('Column')], ['I', t('Image')], ['U', t('Link')], ['F', t('File / audio')], ['E', t('Table')], ['A', t('Database')], ['S', t('Sketch')], ['K', t('Colour')], ['M', t('Map')], ['O', t('Comment')], ['L', t('Line tool')], [t('Double-click canvas'), t('New note')]]],
     [t('Edit'), [[`${m}Z / ${m}⇧Z`, t('Undo / redo')], [`${m}C / ${m}V / ${m}X`, t('Copy / paste / cut')], [`${m}D`, t('Duplicate')], [`${m}A`, t('Select all')], ['Del / ⌫', t('Delete')], ['Enter', t('Edit selected card')], ['Esc', t('Stop editing / deselect')], [t('Arrows'), t('Nudge (⇧ = 10px)')], [`${m}L`, t('Lock / unlock')], [`${m}↵`, t('Duplicate empty column')], [`${m}⇧G`, t('Group selection into column')], ['[[', t('Link to a card')], ['#', t('Tag')]]],
     [t('Navigate'), [[`${m}K`, t('Quick switcher')], [`${m}⇧F`, t('Search')], [`${m}G`, t('Graph view')], [`${m}⇧B`, t('Backlinks panel')], [`${m}[ / ${m}]`, t('Back / forward')], ['Tab', t('Next card')], [t('Space + drag'), t('Pan')], [`${m} + scroll`, t('Zoom')], ['+ / −', t('Zoom in / out')], ['⇧1', t('Zoom to fit')], ['⇧0', t('Zoom 100%')], ['?', t('This cheat-sheet')]]],
     [t('Text'), [[`${m}B`, t('Bold')], [`${m}I`, t('Italic')], [`${m}E`, t('Code')], [`${m}⇧X`, t('Strikethrough')], [`${m}+click link`, t('Open side-by-side')]]],
@@ -246,6 +246,7 @@ export function SettingsDialog() {
           </label>
           <label className="toggle"><input type="checkbox" checked={ui.snap} onChange={(e) => setUI({ snap: e.target.checked })} /> {t('Snap to grid')}</label>
           <label className="toggle"><input type="checkbox" checked={ui.showBadges} onChange={(e) => setUI({ showBadges: e.target.checked })} /> {t('Show backlink count badges on cards')}</label>
+          <label className="toggle"><input type="checkbox" checked={ui.showDots} onChange={(e) => setUI({ showDots: e.target.checked })} /> {t('Show background dots on boards')}</label>
           <label className="toggle"><input type="checkbox" checked={ui.minimap} onChange={(e) => setUI({ minimap: e.target.checked })} /> {t('Show minimap')}</label>
           <label className="field"><span>{t('Unsplash access key (stock image search)')}</span>
             <input value={key} onChange={(e) => { setKey(e.target.value); try { localStorage.setItem('nodeboard:unsplashKey', e.target.value); } catch { /* */ } }} placeholder="optional" />
@@ -442,15 +443,15 @@ export function TemplatesDialog() {
       <div className="template-grid">
         {BUILTIN_TEMPLATES.map((tp) => (
           <button key={tp.id} className="template" disabled={!editable} onClick={() => use(t(tp.name), tp.icon, tp.build(ui.userId))}>
-            <span className="template-icon">{tp.icon}</span>
+            <span className="template-icon"><BoardIcon icon={tp.icon} size={26} /></span>
             <strong>{t(tp.name)}</strong>
             <span className="muted small">{t(tp.description)}</span>
           </button>
         ))}
         {custom.map((tp) => (
           <div key={tp.id} className="template custom">
-            <button disabled={!editable} onClick={() => use(tp.name, '⭐', tp.payload)}>
-              <span className="template-icon">⭐</span>
+            <button disabled={!editable} onClick={() => use(tp.name, 'star', tp.payload)}>
+              <span className="template-icon"><BoardIcon icon="star" size={26} /></span>
               <strong>{tp.name}</strong>
               <span className="muted small">{t('{n} cards', { n: tp.payload.cards.length })} · {t('custom')}</span>
             </button>

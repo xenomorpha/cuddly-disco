@@ -50,6 +50,8 @@ export interface UIState {
   trashOpen: boolean;
   tagPage: string | null;
   docEditor: { cardId: string; anchor?: string | null } | null;
+  rowPage: string | null; // database row opened as a page
+  dbPage: string | null; // database opened full screen
   peek: string | null; // card opened side-by-side (Cmd+click on a link)
   presenting: boolean;
   listView: boolean;
@@ -60,11 +62,11 @@ export interface UIState {
   snap: boolean;
   showBadges: boolean;
   minimap: boolean;
+  showDots: boolean;
   locale: 'en' | 'ru';
   theme: 'light' | 'dark' | 'system';
   tool: 'select' | 'connect';
   shareToken: string | null; // when opened through a public link
-  sidebarOpen: boolean;
   toast: { text: string; at: number } | null;
 }
 
@@ -115,6 +117,8 @@ const initialUI: UIState = {
   trashOpen: false,
   tagPage: null,
   docEditor: null,
+  rowPage: null,
+  dbPage: null,
   peek: null,
   presenting: false,
   listView: false,
@@ -125,11 +129,11 @@ const initialUI: UIState = {
   snap: savedPrefs.snap ?? false,
   showBadges: savedPrefs.showBadges ?? true,
   minimap: savedPrefs.minimap ?? false,
+  showDots: savedPrefs.showDots ?? true,
   locale: savedPrefs.locale ?? (globalThis.navigator?.language?.startsWith('ru') ? 'ru' : 'en'),
   theme: savedPrefs.theme ?? 'light',
   tool: 'select',
   shareToken: null,
-  sidebarOpen: typeof window !== 'undefined' ? window.innerWidth > 800 : true,
   toast: null,
 };
 
@@ -152,11 +156,11 @@ export function setUI(patch: Partial<UIState> | ((ui: UIState) => Partial<UIStat
   useStore.setState((s) => {
     const p = typeof patch === 'function' ? patch(s.ui) : patch;
     const ui = { ...s.ui, ...p };
-    if ('snap' in p || 'showBadges' in p || 'minimap' in p || 'locale' in p || 'theme' in p) {
+    if ('snap' in p || 'showBadges' in p || 'minimap' in p || 'locale' in p || 'theme' in p || 'showDots' in p) {
       try {
         localStorage.setItem(
           'nodeboard:prefs',
-          JSON.stringify({ snap: ui.snap, showBadges: ui.showBadges, minimap: ui.minimap, locale: ui.locale, theme: ui.theme }),
+          JSON.stringify({ snap: ui.snap, showBadges: ui.showBadges, minimap: ui.minimap, locale: ui.locale, theme: ui.theme, showDots: ui.showDots }),
         );
       } catch {
         /* storage unavailable */

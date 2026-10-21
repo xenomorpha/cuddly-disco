@@ -6,6 +6,7 @@ import { updateCard } from '../../model/actions';
 import { uid } from '../../model/store';
 import { useDoc } from '../../hooks';
 import { t } from '../../i18n';
+import { Icon } from '../icons';
 
 export function TodoCard({ card, placement, editing, setEditing, readOnly }: BodyProps) {
   const doc = useDoc();
@@ -103,7 +104,7 @@ export function TodoCard({ card, placement, editing, setEditing, readOnly }: Bod
                 </div>
               ) : (it.due || it.assignee) ? (
                 <div className="todo-meta">
-                  {it.due && <span className={'due' + (!it.done && it.due < new Date().toISOString().slice(0, 10) ? ' overdue' : '')}>📅 {it.due}</span>}
+                  {it.due && <span className={'due' + (!it.done && it.due < new Date().toISOString().slice(0, 10) ? ' overdue' : '')}><Icon name="calendar" size={11} /> {it.due}</span>}
                   {it.assignee && doc.users[it.assignee] && (
                     <span className="avatar xs" style={{ background: doc.users[it.assignee].color }} title={doc.users[it.assignee].name}>{doc.users[it.assignee].name[0]}</span>
                   )}

@@ -15,11 +15,13 @@ export type CardType =
   | 'swatch'
   | 'map'
   | 'comment'
-  | 'shortcut';
+  | 'shortcut'
+  | 'database'
+  | 'row';
 
 export const CARD_TYPES: CardType[] = [
   'note', 'document', 'todo', 'board', 'column', 'image', 'link', 'file',
-  'table', 'sketch', 'swatch', 'map', 'comment', 'shortcut',
+  'table', 'sketch', 'swatch', 'map', 'comment', 'shortcut', 'database', 'row',
 ];
 
 export type Role = 'owner' | 'editor' | 'commenter' | 'viewer';
@@ -58,7 +60,67 @@ export interface Stroke {
   points: number[]; // x, y, pressure triples
 }
 
+// ---------------------------------------------------------------- databases
+
+export type PropKind = 'text' | 'number' | 'select' | 'multiselect' | 'date' | 'checkbox' | 'person' | 'url';
+export const PROP_KINDS: PropKind[] = ['text', 'number', 'select', 'multiselect', 'date', 'checkbox', 'person', 'url'];
+
+export interface DbOption {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface DbProp {
+  id: string;
+  name: string;
+  kind: PropKind;
+  options?: DbOption[];
+}
+
+export type ViewKind = 'table' | 'board' | 'list' | 'gallery' | 'calendar';
+export const VIEW_KINDS: ViewKind[] = ['table', 'board', 'list', 'gallery', 'calendar'];
+
+export type FilterOp = 'contains' | 'notContains' | 'is' | 'isNot' | 'empty' | 'notEmpty' | 'gt' | 'lt' | 'before' | 'after' | 'checked' | 'unchecked';
+
+export interface DbFilter {
+  id: string;
+  prop: string; // prop id, or 'title'
+  op: FilterOp;
+  value?: string;
+}
+
+export interface DbSort {
+  prop: string; // prop id, 'title' or 'created'
+  dir: 'asc' | 'desc';
+}
+
+export interface DbView {
+  id: string;
+  name: string;
+  kind: ViewKind;
+  groupBy?: string | null; // board view: select / multiselect / person / checkbox prop
+  dateProp?: string | null; // calendar view
+  sorts: DbSort[];
+  filters: DbFilter[];
+  hidden: string[]; // prop ids not shown in this view
+}
+
+export interface DbSchema {
+  props: DbProp[];
+  views: DbView[];
+  activeView: string;
+}
+
+export type DbValue = string | number | boolean | string[] | null;
+
 export interface CardData {
+  // database
+  db?: DbSchema;
+  // database row (a card without a canvas placement)
+  databaseId?: string;
+  values?: Record<string, DbValue>;
+  order?: number;
   // board
   parentId?: string | null;
   icon?: string;

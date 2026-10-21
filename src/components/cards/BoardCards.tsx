@@ -3,10 +3,9 @@ import { CardFrame } from '../CardView';
 import { createCard, openBoard, updateCard, updateData } from '../../model/actions';
 import { getIndex, cardTitle } from '../../model/index';
 import { useAccess, useAssetUrl, useDoc } from '../../hooks';
-import { Icon } from '../icons';
+import { BOARD_ICONS, BoardIcon, Icon, normalizeIcon } from '../icons';
 import { t } from '../../i18n';
 
-const ICONS = ['📋', '🔬', '🎨', '🗂', '🔒', '💡', '📚', '🚀', '🎯', '🧪', '📝', '🌱', '🏠', '🎙', '📅', '⭐'];
 const COVERS = ['', '#74b9ff', '#fd79a8', '#55efc4', '#ffeaa7', '#a29bfe', '#fab1a0', '#b2bec3', '#2d3436'];
 
 export function BoardCard({ card, editing, readOnly }: BodyProps) {
@@ -22,7 +21,7 @@ export function BoardCard({ card, editing, readOnly }: BodyProps) {
         className="board-cover"
         style={{ background: cover ? `center/cover url(${cover})` : card.color || card.data.cover || 'var(--board-cover)' }}
       >
-        <span className="board-icon">{restricted ? '🔒' : card.data.icon || '📋'}</span>
+        <span className="board-icon"><BoardIcon icon={restricted ? 'lock' : card.data.icon} size={30} /></span>
       </div>
       {editing && !readOnly ? (
         <div className="interactive board-edit">
@@ -35,8 +34,10 @@ export function BoardCard({ card, editing, readOnly }: BodyProps) {
             onKeyDown={(e) => e.stopPropagation()}
           />
           <div className="icon-pick">
-            {ICONS.map((i) => (
-              <button key={i} className={card.data.icon === i ? 'on' : ''} onClick={() => updateData(card.id, { icon: i })}>{i}</button>
+            {BOARD_ICONS.map((i) => (
+              <button key={i} className={normalizeIcon(card.data.icon) === i ? 'on' : ''} onClick={() => updateData(card.id, { icon: i })} aria-label={i} title={i}>
+                <Icon name={i} size={16} />
+              </button>
             ))}
           </div>
           <div className="swatches">
@@ -49,7 +50,7 @@ export function BoardCard({ card, editing, readOnly }: BodyProps) {
         <>
           <div className="card-title">{restricted ? t('Restricted item') : card.title || t('Untitled board')}</div>
           <div className="muted small">{t('{n} items', { n: count })}</div>
-          <button className="link-btn" onClick={(e) => { e.stopPropagation(); openBoard(card.id); }}>{t('Open')} →</button>
+          <button className="link-btn" onClick={(e) => { e.stopPropagation(); openBoard(card.id); }}>{t('Open')}</button>
         </>
       )}
     </div>
@@ -65,12 +66,12 @@ export function ShortcutCard({ card }: BodyProps) {
   return (
     <div className="card-body shortcut-body">
       <div className="board-cover small" style={{ background: target?.color || 'var(--board-cover)' }}>
-        <span className="board-icon">{visible ? target!.data.icon || '📋' : '⛔'}</span>
+        <span className="board-icon"><BoardIcon icon={visible ? target!.data.icon : 'lock'} size={24} /></span>
         <span className="shortcut-arrow"><Icon name="shortcut" size={14} /></span>
       </div>
       <div className="card-title">{!target || !live ? t('Missing board') : visible ? cardTitle(target) : t('Restricted item')}</div>
       <div className="muted small">{t('Board shortcut')}</div>
-      {visible && <button className="link-btn" onClick={(e) => { e.stopPropagation(); openBoard(target!.id); }}>{t('Open')} →</button>}
+      {visible && <button className="link-btn" onClick={(e) => { e.stopPropagation(); openBoard(target!.id); }}>{t('Open')}</button>}
     </div>
   );
 }
@@ -97,7 +98,7 @@ export function ColumnCard({ card, placement, editing, readOnly }: BodyProps) {
           title={collapsed ? t('Expand') : t('Collapse')}
           onClick={(e) => { e.stopPropagation(); updateData(card.id, { collapsed: !collapsed }); }}
         >
-          {collapsed ? '▸' : '▾'}
+          <Icon name={collapsed ? 'chevronRight' : 'chevronDown'} size={14} />
         </button>
       </div>
       {!collapsed && (

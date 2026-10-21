@@ -383,7 +383,7 @@ export function FileCard({ card, editing, readOnly }: BodyProps) {
             <button className="btn" onClick={() => ref.current?.click()}><Icon name="upload" size={14} /> {t('Upload file')}</button>
             <input ref={ref} type="file" hidden onChange={(e) => e.target.files?.[0] && attachFile(card.id, e.target.files[0], e.target.files[0].name)} />
             {rec ? (
-              <button className="btn danger" onClick={() => rec.stop()}>■ {t('Stop')} · {secs}s</button>
+              <button className="btn danger" onClick={() => rec.stop()}><Icon name="stop" size={14} /> {t('Stop')} · {secs}s</button>
             ) : (
               <button className="btn" onClick={() => void record()}><Icon name="mic" size={14} /> {t('Record audio')}</button>
             )}
@@ -468,7 +468,7 @@ export function MapCard({ card, editing, readOnly }: BodyProps) {
         </div>
       )}
       <iframe className="map-frame" src={src} title={card.title || 'map'} loading="lazy" />
-      <a className="muted small" href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`} target="_blank" rel="noreferrer noopener" onPointerDown={(e) => e.stopPropagation()}>{card.data.address} ↗</a>
+      <a className="muted small" href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`} target="_blank" rel="noreferrer noopener" onPointerDown={(e) => e.stopPropagation()}>{card.data.address} <Icon name="external" size={11} /></a>
     </div>
   );
 }

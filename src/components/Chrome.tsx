@@ -10,123 +10,85 @@ import {
 } from '../model/actions';
 import { canView } from '../model/permissions';
 import { useDoc, useUI, modKey } from '../hooks';
-import { CardTypeIcon, Icon } from './icons';
+import { BoardIcon, CardTypeIcon, Icon } from './icons';
 import { t } from '../i18n';
 
-// ------------------------------------------------------------------ sidebar
+// ------------------------------------------------------------------ workspace menu (replaces the sidebar)
 
-export function Sidebar() {
+export function AppLogo({ size = 22 }: { size?: number }) {
+  return (
+    <svg className="app-logo" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="currentColor" opacity="0.07" />
+      <path d="M11 20.5C14 20.4 17.9 16.3 20.9 11.8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+      <circle cx="10.4" cy="20.9" r="2.6" fill="currentColor" />
+      <circle cx="21.4" cy="11" r="2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+export function WorkspaceMenu() {
   const doc = useDoc();
   const ui = useUI();
   const idx = getIndex(doc);
   const access = currentAccess();
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({ [doc.rootBoardId]: true });
-  const children = new Map<string, string[]>();
-  for (const c of Object.values(doc.cards))
-    if (c.type === 'board' && c.data.parentId && idx.liveBoards.has(c.id)) {
-      const l = children.get(c.data.parentId) ?? [];
-      l.push(c.id);
-      children.set(c.data.parentId, l);
-    }
-  for (const l of children.values()) l.sort((a, b) => idx.title(a).localeCompare(idx.title(b)));
-  const path = boardPath(doc, ui.boardId);
+  const [open, setOpen] = useState(false);
   const favorites = (doc.favorites[ui.userId] ?? []).filter((b) => idx.liveBoards.has(b) && access.canSee(b));
-  const recent = (doc.recent[ui.userId] ?? []).filter((b) => idx.liveBoards.has(b) && access.canSee(b)).slice(0, 6);
+  const recent = (doc.recent[ui.userId] ?? []).filter((b) => idx.liveBoards.has(b) && access.canSee(b) && !favorites.includes(b)).slice(0, 6);
   const shared = Object.values(doc.permissions)
     .filter((p) => p.userId === ui.userId && p.role !== 'none' && idx.liveBoards.has(p.boardId))
     .map((p) => p.boardId);
   const trashCount = Object.values(doc.cards).filter((c) => c.deletedAt).length;
-  const tags = [...idx.tags.entries()].map(([tag, set]) => [tag, [...set].filter((id) => access.canSee(id)).length] as const).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 20);
-
-  const Node = ({ id, depth }: { id: string; depth: number }) => {
-    const kids = (children.get(id) ?? []).filter((k) => canView(access.board(k)));
-    const open = expanded[id] || path.includes(id);
-    const fav = favorites.includes(id);
-    return (
-      <li>
-        <div
-          className={'tree-row' + (ui.boardId === id ? ' active' : '')}
-          style={{ paddingLeft: 6 + depth * 14 }}
-          data-sidebar-board={id}
-        >
-          {kids.length ? (
-            <button className="twisty" onClick={() => setExpanded((e) => ({ ...e, [id]: !open }))} aria-label={open ? t('Collapse') : t('Expand')} aria-expanded={open}>
-              {open ? '▾' : '▸'}
-            </button>
-          ) : (
-            <span className="twisty" />
-          )}
-          <button className="tree-label" onClick={() => openBoard(id)}>
-            <span className="board-emoji">{doc.cards[id]?.data.icon ?? '📋'}</span>
-            <span className="tree-title">{idx.title(id)}</span>
-          </button>
-          <span className="tree-count muted">{idx.childCount(id) || ''}</span>
-          <button className={'star' + (fav ? ' on' : '')} onClick={() => toggleFavorite(id)} aria-label={fav ? t('Remove from favourites') : t('Add to favourites')} title={t('Favourite')}>
-            <Icon name="star" size={13} />
-          </button>
-        </div>
-        {open && kids.length > 0 && (
-          <ul>{kids.map((k) => <Node key={k} id={k} depth={depth + 1} />)}</ul>
-        )}
-      </li>
-    );
+  const tags = [...idx.tags.entries()].map(([tag, set]) => [tag, [...set].filter((id) => access.canSee(id)).length] as const).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 16);
+  const go = (fn: () => void) => () => {
+    setOpen(false);
+    fn();
   };
-
-  const List = ({ title, ids }: { title: string; ids: string[] }) =>
-    ids.length ? (
-      <section>
-        <h4>{title}</h4>
-        <ul className="flat">
-          {ids.map((id) => (
-            <li key={id}>
-              <button className={'tree-label' + (ui.boardId === id ? ' active' : '')} onClick={() => openBoard(id)} data-sidebar-board={id}>
-                <span className="board-emoji">{doc.cards[id]?.data.icon ?? '📋'}</span>
-                <span className="tree-title">{idx.title(id)}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
-    ) : null;
-
+  const BoardRow = ({ id }: { id: string }) => (
+    <button className={ui.boardId === id ? 'on' : ''} onClick={go(() => openBoard(id))}>
+      <BoardIcon icon={doc.cards[id]?.data.icon} size={15} />
+      <span className="grow ellipsis">{idx.title(id)}</span>
+      <span className="hint">{idx.childCount(id) || ''}</span>
+    </button>
+  );
+  const home = canView(access.board(doc.rootBoardId)) ? doc.rootBoardId : shared[0];
   return (
-    <nav className="sidebar" aria-label={t('Boards')}>
-      <div className="ws-name">
-        <span className="logo">◉</span>
-        <strong>{doc.name}</strong>
-      </div>
-      <button className="search-launch" onClick={() => setUI({ quickSwitcher: true })}>
-        <Icon name="search" size={14} /> {t('Jump to…')} <kbd>{modKey()}K</kbd>
+    <div className="pop">
+      <button className="ws-button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={t('Workspace menu')} title={t('Workspace menu')}>
+        <AppLogo />
+        <span className="hide-sm">{doc.name}</span>
+        <Icon name="chevronDown" size={13} />
       </button>
-      <div className="side-scroll">
-        <List title={t('Favourites')} ids={favorites} />
-        <List title={t('Recent')} ids={recent.filter((r) => !favorites.includes(r))} />
-        <List title={t('Shared with me')} ids={shared} />
-        <section>
-          <h4>{t('Boards')}</h4>
-          {canView(access.board(doc.rootBoardId)) ? (
-            <ul className="tree"><Node id={doc.rootBoardId} depth={0} /></ul>
-          ) : (
-            <ul className="tree">{shared.map((s) => <Node key={s} id={s} depth={0} />)}</ul>
-          )}
-        </section>
-        {tags.length > 0 && (
-          <section>
-            <h4>{t('Tags')}</h4>
-            <div className="chips">
-              {tags.map(([tag, n]) => (
-                <button key={tag} className={'chip' + (ui.tagPage === tag ? ' on' : '')} onClick={() => setUI({ tagPage: tag })}>#{tag} <span className="muted">{n}</span></button>
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
-      <div className="side-foot">
-        <button onClick={() => setUI({ templatesOpen: true })}><Icon name="template" size={15} /> {t('Templates')}</button>
-        <button onClick={() => setUI({ trashOpen: true })} data-drop-trash><Icon name="trash" size={15} /> {t('Trash')} {trashCount > 0 && <span className="count">{trashCount}</span>}</button>
-        <button onClick={() => setUI({ settingsOpen: true })}><Icon name="settings" size={15} /> {t('Settings')}</button>
-      </div>
-    </nav>
+      {open && (
+        <>
+          <div className="ctx-backdrop" onPointerDown={() => setOpen(false)} />
+          <div className="menu ws-menu" role="menu">
+            {home && <button onClick={go(() => openBoard(home))}><Icon name="home" size={15} /> <span className="grow">{t('Home')}</span></button>}
+            <button onClick={go(() => setUI({ quickSwitcher: true }))}><Icon name="search" size={15} /> <span className="grow">{t('Jump to…')}</span><span className="hint">{modKey()}K</span></button>
+            {favorites.length > 0 && <div className="menu-label">{t('Favourites')}</div>}
+            {favorites.map((id) => <BoardRow key={id} id={id} />)}
+            {recent.length > 0 && <div className="menu-label">{t('Recent')}</div>}
+            {recent.map((id) => <BoardRow key={id} id={id} />)}
+            {shared.length > 0 && <div className="menu-label">{t('Shared with me')}</div>}
+            {shared.map((id) => <BoardRow key={id} id={id} />)}
+            {tags.length > 0 && (
+              <>
+                <div className="menu-label">{t('Tags')}</div>
+                <div className="chips menu-chips">
+                  {tags.map(([tag, n]) => (
+                    <button key={tag} className="chip" onClick={go(() => setUI({ tagPage: tag }))}>#{tag} <span className="muted">{n}</span></button>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="menu-sep" />
+            <button onClick={go(() => setUI({ templatesOpen: true }))}><Icon name="template" size={15} /> <span className="grow">{t('Templates')}</span></button>
+            <button onClick={go(() => setUI({ trashOpen: true }))}><Icon name="trash" size={15} /> <span className="grow">{t('Trash')}</span>{trashCount > 0 && <span className="count">{trashCount}</span>}</button>
+            <button onClick={go(() => setUI({ settingsOpen: true }))}><Icon name="settings" size={15} /> <span className="grow">{t('Settings')}</span></button>
+            <button onClick={go(() => setUI({ shortcuts: true }))}><Icon name="info" size={15} /> <span className="grow">{t('Keyboard shortcuts')}</span><span className="hint">?</span></button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -152,7 +114,7 @@ export function Topbar() {
 
   return (
     <header className="topbar">
-      <button className="icon-btn" onClick={() => setUI({ sidebarOpen: !ui.sidebarOpen })} aria-label={t('Toggle sidebar')} aria-expanded={ui.sidebarOpen}><Icon name="menu" /></button>
+      {ui.shareToken ? <span className="ws-button"><AppLogo /></span> : <WorkspaceMenu />}
       <button className="icon-btn" disabled={!ui.back.length} onClick={goBack} aria-label={t('Back')} title={t('Back') + ` (${modKey()}[)`}><Icon name="back" /></button>
       <button className="icon-btn" disabled={!ui.forward.length} onClick={goForward} aria-label={t('Forward')} title={t('Forward') + ` (${modKey()}])`}><Icon name="forward" /></button>
       <nav className="breadcrumbs" aria-label={t('Breadcrumb')}>
@@ -160,8 +122,8 @@ export function Topbar() {
           <span key={b} className="crumb">
             {i > 0 && <span className="sep">/</span>}
             {access.canSee(b) ? (
-              <button className={i === path.length - 1 ? 'current' : ''} onClick={() => openBoard(b)} aria-current={i === path.length - 1 ? 'page' : undefined}>
-                <span className="board-emoji">{doc.cards[b]?.data.icon}</span> {idx.title(b)}
+              <button className={i === path.length - 1 ? 'current' : ''} onClick={() => openBoard(b)} aria-current={i === path.length - 1 ? 'page' : undefined} data-nav-board={b} title={i < path.length - 1 ? t('Drop cards here to move them to this board') : undefined}>
+                <BoardIcon icon={doc.cards[b]?.data.icon} size={15} /> {idx.title(b)}
               </button>
             ) : (
               <span className="muted">…</span>
@@ -263,6 +225,7 @@ const TOOL_TYPES: { type: CardType | 'line'; label: string; key?: string }[] = [
   { type: 'link', label: 'Link', key: 'U' },
   { type: 'file', label: 'File / audio', key: 'F' },
   { type: 'table', label: 'Table', key: 'E' },
+  { type: 'database', label: 'Database', key: 'A' },
   { type: 'sketch', label: 'Sketch', key: 'S' },
   { type: 'swatch', label: 'Colour', key: 'K' },
   { type: 'map', label: 'Map', key: 'M' },

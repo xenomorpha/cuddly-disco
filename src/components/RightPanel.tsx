@@ -156,7 +156,7 @@ export function BacklinksPanel({ target }: { target: string }) {
         </div>
       ))}
       <h4 className="clickable" onClick={() => setShowMentions((s) => !s)}>
-        {t('Unlinked mentions')} <span className="count">{mentions.length}{mentions.length >= 50 ? '+' : ''}</span> <span className="muted">{showMentions ? '▾' : '▸'}</span>
+        {t('Unlinked mentions')} <span className="count">{mentions.length}{mentions.length >= 50 ? '+' : ''}</span> <Icon name={showMentions ? 'chevronDown' : 'chevronRight'} size={13} />
       </h4>
       {showMentions && !mentions.length && <div className="muted small">{t('No plain-text mentions of "{t}".', { t: title })}</div>}
       {mentions.map((x, i) => (
